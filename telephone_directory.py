@@ -1,20 +1,3 @@
-"""
-Создать телефонный справочник с
-возможностью импорта и экспорта данных в
-формате .txt. Фамилия, имя, отчество, номер
-телефона - данные, которые должны находиться
-в файле.
-1. Программа должна выводить данные
-2. Программа должна сохранять данные в
-текстовом файле
-3. Пользователь может ввести одну из
-характеристик для поиска определенной
-записи(Например имя или фамилию
-человека)
-4. Использование функций. Ваша программа
-не должна быть линейной
-"""
-
 from csv import DictReader, DictWriter
 from os.path import exists
 
@@ -74,24 +57,50 @@ def standart_write(file_name, res):
         f_w.writerows(res)
 
 def copy_data(src_file, dest_file):
-    # Запрашиваем у пользователя номер строки для копирования
     row_number = int(input('Введите номер строки для копирования: '))
-    # Читаем данные из исходного файла
     src_data = read_file(src_file)
-
-    # Проверяем, существует ли строка с указанным номером
     if 1 <= row_number <= len(src_data):
         row_to_copy = src_data[row_number - 1]
-        # Читаем данные из файла назначения
         dest_data = read_file(dest_file)
-        # Добавляем строку к данным файла назначения
         dest_data.append(row_to_copy)
-        # Записываем обновленные данные в файл назначения
         standart_write(dest_file, dest_data)
         print(f'Строка {row_number} успешно скопирована из {src_file} в {dest_file}')
     else:
         print('Введен неверный номер строки')
 
+def find_record(file_name, first_name=None, second_name=None):
+    res = read_file(file_name)
+    for i, record in enumerate(res):
+        if first_name and record['first_name'] == first_name:
+            return i, record
+        if second_name and record['second_name'] == second_name:
+            return i, record
+    return None, None
+
+def remove_by_name(file_name):
+    first_name = input('Введите имя для удаления: ')
+    second_name = input('Введите фамилию для удаления: ')
+    index, record = find_record(file_name, first_name, second_name)
+    if record:
+        res = read_file(file_name)
+        res.pop(index)
+        standart_write(file_name, res)
+        print(f'Запись {record} удалена.')
+    else:
+        print('Запись не найдена.')
+
+def update_record(file_name):
+    first_name = input('Введите имя для обновления: ')
+    second_name = input('Введите фамилию для обновления: ')
+    index, record = find_record(file_name, first_name, second_name)
+    if record:
+        new_info = get_info()
+        res = read_file(file_name)
+        res[index] = {'first_name': new_info[0], 'second_name': new_info[1], 'phone_number': new_info[2]}
+        standart_write(file_name, res)
+        print(f'Запись {record} обновлена на {new_info}.')
+    else:
+        print('Запись не найдена.')
 
 file_name = 'phone.csv'
 def main():
@@ -122,13 +131,15 @@ def main():
             if not exists(dest_file):
                 create_file(dest_file)
             copy_data(src_file, dest_file)
+        elif command == 'dn':
+            if not exists(file_name):
+                print('Файл отсутствует, пожалуйста создайте файл')
+                continue
+            remove_by_name(file_name)
+        elif command == 'u':
+            if not exists(file_name):
+                print('Файл отсутствует, пожалуйста создайте файл')
+                continue
+            update_record(file_name)
+
 main()
-
-
-"""
-реализовать копирование данных из файла А в файл B.
-написать отдельную функцию copy_data:
-прочитать список словарей (read_file)
-и записать его в новый файл используя функцию standart_write
-дополнить функцию main
-"""
